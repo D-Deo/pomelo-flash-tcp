@@ -11,15 +11,17 @@ it`s a simple component for supporting pomelo-hybridconnector(tcp)
 		useDict : false,
 		useProtobuf : false,
   });
+  
+  
 ================
 
 
-1. 连接服务器：
+1. 连接服务器
 
   var pomelo:Pomelo = new Pomelo()
   pomelo:init({ 'host': "127.0.0.1", 'port': 3010 });
-
-监听 pomelo 的 handshake 事件，连接成功后会触发此事件：
+  
+  监听 pomelo 的 handshake 事件，连接成功后会触发此事件：
   
   pomelo.addEventListener("handshake", onSuccess);
 
@@ -29,14 +31,14 @@ it`s a simple component for supporting pomelo-hybridconnector(tcp)
     trace("response object : ", response);
   });
 
-3. notify：
+3. notify
   
   pomelo.notify("connector.roomHandler.enter", {});
 
-4. 服务器推送：
+4. 服务器推送
+	
+  利用 as3 的事件机制便可以完成接受服务器的推送内容：
 
-利用 as3 的事件机制便可以完成接受服务器的推送内容：
-  
   pomelo.addEventListener("onStart", function(e:PomeloEvent):void {
     trace(e.message);
   });
