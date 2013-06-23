@@ -36,7 +36,7 @@ pomelo.request("connecter.LoginHandler.login", {}, function(response:Object):voi
 
 ＃3. notify
 notify是不需要服务器返回response的，所以没有callback
-```action script
+```actionscript
 pomelo.notify("connector.roomHandler.enter", {});
 ```
 
