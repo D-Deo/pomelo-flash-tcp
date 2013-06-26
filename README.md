@@ -5,7 +5,10 @@ it`s a simple component for supporting pomelo-hybridconnector(tcp)
 
 这是一个为了可以用 flash 的 as3 来和服务端的 pomelo 通讯的 tcp 组件，因为出于一些其他原因，所以并没有做到最好，但是在自己的项目中已经可以和后台进行调试。
 
-目前该组件不支持 pomelo 的 protobuf 和 dict，后台调试时需设置：
+
+＃当前只能直接连接connector服务器，通过gate服务器做分配的方式，在之后的版本会加上
+
+＃目前该组件不支持 pomelo 的 protobuf 和 dict，后台调试时需设置：
 ```actionscript
 app.set('connectorConfig', {
   connector : pomelo.connectors.hybridconnector,
