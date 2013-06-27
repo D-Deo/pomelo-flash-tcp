@@ -15,9 +15,9 @@ package org.idream.pomelo
 
 	public class Pomelo extends EventDispatcher
 	{
-		private static const CLIENT_INFO:String = "{'sys': {'version': '0.0.1', +'type': 'falsh-socket' +}, 'user': {}}";
+		private var _info:Object;
+		private var _handshakeCallback:Function;
 		
-		private var _user:Object;
 		private var _socket:Socket;
 		
 		private var _reqId:int;
@@ -25,17 +25,15 @@ package org.idream.pomelo
 		
 		public function Pomelo()
 		{
-			_user = { sys: { version:"0.0.1", type:"flash-socket" }, user: { }};
+			_info = { sys: { version:"0.0.2a", type:"pomelo-flash-tcp" } };
 			_callbacks = new Dictionary(true);
 		}
 		
-		/**
-		 * connect to server
-		 * @param	params		{host:String, port:int, user:Object = null, handshakeCallback:Function = null}
-		 * @param	callback
-		 */
-		public function init(params:Object, callback:Function = null):void
+		public function init(host:String, port:int, user:Object = null, handshakeCallback:Function = null):void
 		{
+			_info.user = user;
+			_handshakeCallback = handshakeCallback;
+			
 			_socket = new Socket();
 			_socket.addEventListener(Event.CONNECT, onConnect, false, 0, true);
 			_socket.addEventListener(Event.CLOSE, onClose, false, 0, true);
@@ -45,22 +43,20 @@ package org.idream.pomelo
 			
 			//this.addEventListener(Event.ENTER_FRAME, onDecode);
 			
-			_socket.connect(params.host, params.port);
+			_socket.connect(host, port);
 			
 			function onConnect(e:Event):void
 			{
-				trace("success ...");
-				var bytes:ByteArray = Package.encode(Package.TYPE_HANDSHAKE, Protocol.strencode(JSON.stringify(_user)));
+				trace("connect success ...");
+				
+				var bytes:ByteArray = Package.encode(Package.TYPE_HANDSHAKE, Protocol.strencode(JSON.stringify(_info)));
 				_socket.writeBytes(bytes, 0, bytes.length);
 				_socket.flush();
-				trace("handshake ...");
-				
-				//dispatchEvent(e);//
 			}
 			
 			function onClose(e:Event):void
 			{
-				trace("close ...");
+				trace("connect close ...");
 				
 				_socket.removeEventListener(Event.CONNECT, onConnect);
 				_socket.removeEventListener(Event.CLOSE, onClose);
@@ -69,28 +65,25 @@ package org.idream.pomelo
 				_socket.removeEventListener(SecurityErrorEvent.SECURITY_ERROR, onSecurityError);
 				_socket = null;
 				
-//				SvnList.NetWork=2//连接关闭
-				
 				dispatchEvent(e);
 			}
 			
 			function onIOError(e:IOErrorEvent):void
 			{
-				trace("io error ...");
-//				SvnList.NetWork=3//服务器断开连接
-				_socket.connect("124.14.7.135", 3010);
+				trace(e);
+				dispatchEvent(e);
 			}
 			
 			function onSecurityError(e:SecurityErrorEvent):void
 			{
-				trace("security error ...");
-//				SvnList.NetWork=3//服务器断开连接
+				trace(e);
+				dispatchEvent(e);
 			}
 		}
 		
 		private function onDecode(e:Event):void
 		{
-			
+			//TODO: decode data for cache
 		}
 		
 		public function disconnect():void
@@ -100,7 +93,6 @@ package org.idream.pomelo
 		
 		public function request(route:String, msg:Object, callback:Function):void
 		{
-			
 			if (!route || !route.length) return;
 			
 			msg = msg || {};
@@ -148,16 +140,16 @@ package org.idream.pomelo
 					var ack:ByteArray = Package.encode(Package.TYPE_HANDSHAKE_ACK);
 					_socket.writeBytes(ack, 0, ack.length);
 					_socket.flush();
-					trace("handshake ack ...");
 					
-//					SvnList.NetWork=1//连接成功
-					dispatchEvent(new Event("handshake"));
+					if (_handshakeCallback) _handshakeCallback.apply(null, [JSON.parse(message)]);
+					else dispatchEvent(new Event("handshake"));
 					break;
 				
 				case 2:
 					break;
 				
 				case 3:
+					//TODO: server heartbeat package
 					break;
 				
 				case 4:
@@ -175,6 +167,7 @@ package org.idream.pomelo
 					break;
 				
 				case 5:
+					//TODO: server close client
 					break;
 			}
 		}
