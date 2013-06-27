@@ -6,7 +6,9 @@ it`s a simple component for supporting pomelo-hybridconnector(tcp)
 version: 0.0.2a
 
 features:
+
 1. add a test about how to support gate server (as lordofpomelo)
+
 2. clean code
 
 
@@ -15,8 +17,9 @@ features:
 
 这是一个为了可以用 flash 的 as3 来和服务端的 pomelo 通讯的 tcp 组件，在自己的项目中已经可以和后台进行调试。
 
-#目前该组件不支持 pomelo 的 protobuf 和 dict，相关的服务器都需要设置如下参数：
-```actionscript
+
+@目前该组件不支持 pomelo 的 protobuf 和 dict，相关的服务器都需要设置如下参数：
+```javascript
 app.set('connectorConfig', {
   connector : pomelo.connectors.hybridconnector,
   useDict : false,
@@ -48,7 +51,7 @@ pomelo:init("127.0.0.1", 3014, null, function(response:Object):void {
 返回的response是一个object的对象，它解析自服务器的JSON对象
 ```actionscript
 pomelo.request("connecter.LoginHandler.login", {}, function(response:Object):void {
-  trace("response object : ", response);
+    trace("response object : ", response);
 });
 ```
 
