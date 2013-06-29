@@ -35,13 +35,13 @@ app.set('connectorConfig', {
 需要监听 pomelo 的 handshake 事件，连接成功后会触发此事件
 ```actionscript
 var pomelo:Pomelo = new Pomelo()
-pomelo:init("127.0.0.1", 3014);
+pomelo.init("127.0.0.1", 3014);
 pomelo.addEventListener("handshake", onSuccess);
 ```
 
 PS: v0.0.2a 版本可以在 init 方法中直接传递一个 callback，无需监听 handshake 事件，不过此事件仍保留
 ```actionscript
-pomelo:init("127.0.0.1", 3014, null, function(response:Object):void {
+pomelo.init("127.0.0.1", 3014, null, function(response:Object):void {
     if (response.code == 200) trace(response.user.msg);
 });
 ```
