@@ -3,13 +3,13 @@ Pomelo-Flash-TCP
 
 it`s a simple component for supporting pomelo-hybridconnector(tcp)
 
-version: 0.0.2a
+version: 0.0.3a
 
 features:
 
-1. add a test about how to support gate server (as lordofpomelo)
+1. support routeDict
 
-2. clean code
+2. support server port of protobuf (server to client)
 
 
 ================
@@ -17,13 +17,14 @@ features:
 
 这是一个为了可以用 flash 的 as3 来和服务端的 pomelo 通讯的 tcp 组件，在自己的项目中已经可以和后台进行调试。
 
+@目前 v0.0.3a 已支持 pomelo 的 routeDict 和 服务端的 protobuf（即客户端可以解析服务端，但服务端暂时不能解析客户端）
 
-@目前该组件不支持 pomelo 的 protobuf 和 dict，相关的服务器都需要设置如下参数：
+相关的服务器可设置如下参数：
 ```javascript
 app.set('connectorConfig', {
   connector : pomelo.connectors.hybridconnector,
-  useDict : false,
-  useProtobuf : false,
+  useDict : true,
+  useProtobuf : true,
 });
 ```
   
