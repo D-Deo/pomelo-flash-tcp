@@ -13,22 +13,37 @@ package org.idream.pomelo
 	import org.idream.pomelo.Package;
 	import org.idream.pomelo.Protocol;
 
+	/**
+	 * Pomelo
+	 * @author Deo
+	 * @version v0.0.3a
+	 */
 	public class Pomelo extends EventDispatcher
 	{
+		private var _sys:Object = {};
 		private var _info:Object;
 		private var _handshakeCallback:Function;
 		
 		private var _socket:Socket;
 		
 		private var _reqId:int;
-		private var _callbacks:Dictionary;
+		private var _requestDict:Dictionary;
+		private var _routeDict:Dictionary;
 		
 		public function Pomelo()
 		{
-			_info = { sys: { version:"0.0.2a", type:"pomelo-flash-tcp" } };
-			_callbacks = new Dictionary(true);
+			_info = { sys: { version:"0.0.3a", type:"pomelo-flash-tcp" } };
+			_requestDict = new Dictionary(true);
+			_routeDict = new Dictionary(true);
 		}
 		
+		/**
+		 * 初始化客户端，并尝试连接服务器
+		 * @param host
+		 * @param port
+		 * @param user 客户端与服务器之间的自定义数据
+		 * @param handshakeCallback 当连接成功会调用此方法
+		 */
 		public function init(host:String, port:int, user:Object = null, handshakeCallback:Function = null):void
 		{
 			_info.user = user;
@@ -81,16 +96,26 @@ package org.idream.pomelo
 			}
 		}
 		
-		private function onDecode(e:Event):void
-		{
-			//TODO: decode data for cache
-		}
+//		private function onDecode(e:Event):void
+//		{
+//			
+//		}
 		
+		/**
+		 * 与服务器主动断开连接
+		 */
 		public function disconnect():void
 		{
 			_socket.close();
+			_socket = null;
 		}
 		
+		/**
+		 * 向服务器请求数据
+		 * @param route
+		 * @param msg
+		 * @param callback 服务器返回数据时会回调
+		 */
 		public function request(route:String, msg:Object, callback:Function):void
 		{
 			if (!route || !route.length) return;
@@ -100,9 +125,14 @@ package org.idream.pomelo
 			_reqId++;
 			send(_reqId, route, msg);
 			
-			_callbacks[_reqId] = callback;
+			_requestDict[_reqId] = {'route': route, 'callback': callback};
 		}
 		
+		/**
+		 * 向服务器发送数据
+		 * @param route
+		 * @param msg
+		 */
 		public function notify(route:String, msg:Object):void
 		{
 			msg = msg || {};
@@ -115,7 +145,7 @@ package org.idream.pomelo
 			
 			var byte:ByteArray = Protocol.strencode(JSON.stringify(msg));
 			
-			byte = Message.encode(reqId, type, route, byte);
+			byte = Message.encode(reqId, type, _sys.dict ? _sys.dict[route] : route, byte);
 			byte = Package.encode(Package.TYPE_DATA, byte);
 			
 			_socket.writeBytes(byte, 0, byte.length);
@@ -136,12 +166,25 @@ package org.idream.pomelo
 				case 1:
 					var message:String = pkg.body.readUTFBytes(pkg.body.length);
 					trace(message);
+					var response:Object = JSON.parse(message);
 					
-					var ack:ByteArray = Package.encode(Package.TYPE_HANDSHAKE_ACK);
-					_socket.writeBytes(ack, 0, ack.length);
-					_socket.flush();
+					if (response.code == 200)
+					{
+						if (response.sys) 
+						{
+							_sys = response.sys;
+							for (var key:String in _sys.dict)
+							{
+								_routeDict[_sys.dict[key]] = key;
+							}
+						}
+						
+						var ack:ByteArray = Package.encode(Package.TYPE_HANDSHAKE_ACK);
+						_socket.writeBytes(ack, 0, ack.length);
+						_socket.flush();
+					}
 					
-					if (_handshakeCallback) _handshakeCallback.apply(null, [JSON.parse(message)]);
+					if (_handshakeCallback != null) _handshakeCallback.call(this, response);
 					else dispatchEvent(new Event("handshake"));
 					break;
 				
@@ -154,15 +197,34 @@ package org.idream.pomelo
 				
 				case 4:
 					var msg:Object = Message.decode(pkg.body);
+					
+					if (!msg.id && !(msg.route is String)) 
+					{
+						msg.route = _routeDict[msg.route];
+					}
+					else if (msg.id && !msg.route) 
+					{
+						msg.route = _requestDict[msg.id].route;
+					}
+					
+					if (_sys.protos && _sys.protos.server && _sys.protos.server[msg.route])
+					{
+						msg.body = Protobuf.decode(_sys.protos.server[msg.route], msg.body);
+					}
+					else
+					{
+						msg.body = JSON.parse(Protocol.strdecode(msg.body));
+					}
+					
 					if (!msg.id)
 					{
 						dispatchEvent(new PomeloEvent(msg.route, msg.body));
 					}
 					else
 					{
-						(_callbacks[msg.id] as Function).call(this, msg.body);
-						_callbacks[msg.id] = null;
-						delete _callbacks[msg.id];
+						_requestDict[msg.id].callback.call(this, msg.body);
+						_requestDict[msg.id] = null;
+						delete _requestDict[msg.id];
 					}
 					break;
 				

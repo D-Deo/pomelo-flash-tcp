@@ -1,4 +1,4 @@
-package 
+﻿package 
 {
 	import flash.display.Shape;
 	import flash.display.SimpleButton;
@@ -36,7 +36,7 @@ package
 			// init events
 			_pomelo = new Pomelo();
 			_pomelo.addEventListener("onReady", function(e:PomeloEvent):void {
-				
+				trace("onReady event");
 			});
 			_pomelo.addEventListener("onStart", function(e:PomeloEvent):void {
 				
@@ -45,15 +45,11 @@ package
 			// connect
 			var connect:Sprite = createButton("connect", 100, 100);
 			connect.addEventListener(MouseEvent.CLICK, function(e:MouseEvent):void {
-//				_pomelo.init( { 'host':"10.192.247.24", 'port':3010 } );
-//				_pomelo.init({host:"192.168.1.102", port:"3010"});
-				_pomelo.init("127.0.0.1", 3014, null, function(msg:Object):void {
-					if (msg.code == 200)
+				_pomelo.init("127.0.0.1", 3014, null, function(response:Object):void {
+					if (response.code == 200)
 					{
-						trace(msg.user.message);
-						
 						_pomelo.request("gate.gateHandler.entry", {uid:1}, function(response:Object):void {
-							if (response.code == 200) 
+							if (response.code == 200)
 							{
 								trace(response.host, response.port);
 								_pomelo.disconnect();
@@ -70,28 +66,28 @@ package
 			// login
 			var login:Sprite = createButton("login", 200, 100);
 			login.addEventListener(MouseEvent.CLICK, function(e:MouseEvent):void {
-				_pomelo.request("connector.loginHandler.connect", { playerId:211 }, function(response:Object):void {
+				_pomelo.request("connector.loginHandler.connect", null, function(response:Object):void {
 					trace(response.player);
 					_player = response.player;
 				});
 			});
-//			
-//			// start
-//			var start:Sprite = createButton("start", 300, 100);
-//			start.addEventListener(MouseEvent.CLICK, function(e:MouseEvent):void {
-//				_pomelo.request("connector.playerHandler.selectRoom", { roomMid:1 }, function(response:Object):void {
-//					trace(response.room);
-//				});
-//			});
-//			
-//			// ready
-//			var ready:Sprite = createButton("ready", 400, 100);
-//			ready.addEventListener(MouseEvent.CLICK, function(e:MouseEvent):void {
-//				if (_player.state == PLAYER_IDLE)
-//				{
-//					_pomelo.notify("connector.playerHandler.ready", null);
-//				}
-//			});
+			
+			// start
+			var start:Sprite = createButton("start", 300, 100);
+			start.addEventListener(MouseEvent.CLICK, function(e:MouseEvent):void {
+				_pomelo.request("connector.playerHandler.selectRoom", { roomMid:1 }, function(response:Object):void {
+					trace(response.room);
+				});
+			});
+			
+			// ready
+			var ready:Sprite = createButton("ready", 400, 100);
+			ready.addEventListener(MouseEvent.CLICK, function(e:MouseEvent):void {
+				if (_player.state == PLAYER_IDLE)
+				{
+					_pomelo.notify("connector.playerHandler.ready", null);
+				}
+			});
 		}
 		
 		public function createButton(text:String = null, x:Number = 0, y:Number = 0, added:Boolean = true):Sprite

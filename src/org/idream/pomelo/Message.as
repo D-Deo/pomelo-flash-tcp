@@ -23,10 +23,10 @@ package org.idream.pomelo
 		public static const TYPE_RESPONSE:int = 2;
 		public static const TYPE_PUSH:int = 3;
 		
-		public static function encode(id:int, type:int, route:String, msg:ByteArray):ByteArray
+		public static function encode(id:int, type:int, route:*, msg:ByteArray):ByteArray
 		{
 			var byte:ByteArray = new ByteArray();
-			byte.writeByte((type << 1) | 0);
+			byte.writeByte((type << 1) | ((route is String) ? 0 : 1));
 			
 			if (id)
 			{
@@ -45,10 +45,18 @@ package org.idream.pomelo
 				}
 			}
 			
-			if (route && route.length)
+			if (route)
 			{
-				byte.writeByte(route.length & 0xff);
-				byte.writeUTFBytes(route);
+				if (route is String)
+				{
+					byte.writeByte(route.length & 0xff);
+					byte.writeUTFBytes(route);
+				}
+				else
+				{
+					byte.writeByte((route >> 8) & 0xff);
+					byte.writeByte(route & 0xff);
+				}
 			}
 			
 			if (msg) 
@@ -83,15 +91,24 @@ package org.idream.pomelo
 			// parse route
 			if (type === Message.TYPE_REQUEST || type === Message.TYPE_NOTIFY || type === Message.TYPE_PUSH)
 			{
-				var routeLen:int = buffer.readUnsignedByte();
-				var route:String = routeLen ? buffer.readUTFBytes(routeLen) : "";
+				var route:*;
+				
+				if (compressRoute)
+				{
+					route = buffer.readUnsignedShort();
+				}
+				else
+				{
+					var routeLen:int = buffer.readUnsignedByte();
+					route = routeLen ? buffer.readUTFBytes(routeLen) : "";
+				}
 			}
 			
 			// parse body
-			var body:String = Protocol.strdecode(buffer);
+//			var body:String = Protocol.strdecode(buffer);
 			
-			trace(id, type, route, body);
-			return { 'id': id, 'type': type, 'compressRoute': compressRoute, 'route': route, 'body': JSON.parse(body) };
+			trace(id, type, compressRoute, route);
+			return { 'id': id, 'type': type, 'compressRoute': compressRoute, 'route': route, 'body': buffer };
 		}
 		
 	}
