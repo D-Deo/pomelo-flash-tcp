@@ -67,7 +67,12 @@
 			var login:Sprite = createButton("login", 200, 100);
 			login.addEventListener(MouseEvent.CLICK, function(e:MouseEvent):void {
 				_pomelo.request("connector.loginHandler.connect", null, function(response:Object):void {
-					trace(response.player);
+					trace(response.code);
+					for (var key:* in response.player) 
+					{
+						trace(key.toString() + ": " + response.player[key]);
+					}
+					
 					_player = response.player;
 				});
 			});
