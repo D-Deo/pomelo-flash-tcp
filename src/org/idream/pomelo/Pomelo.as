@@ -16,7 +16,7 @@ package org.idream.pomelo
 	/**
 	 * Pomelo
 	 * @author Deo
-	 * @version v0.0.3a
+	 * @version v0.0.4a
 	 */
 	public class Pomelo extends EventDispatcher
 	{
@@ -32,7 +32,7 @@ package org.idream.pomelo
 		
 		public function Pomelo()
 		{
-			_info = { sys: { version:"0.0.3a", type:"pomelo-flash-tcp" } };
+			_info = { sys: { version:"0.0.4a", type:"pomelo-flash-tcp" } };
 			_requestDict = new Dictionary(true);
 			_routeDict = new Dictionary(true);
 		}
@@ -143,7 +143,15 @@ package org.idream.pomelo
 		{
 			var type:int = reqId ? Message.TYPE_REQUEST : Message.TYPE_NOTIFY;
 			
-			var byte:ByteArray = Protocol.strencode(JSON.stringify(msg));
+			var byte:ByteArray;
+			if (_sys.protos && _sys.protos.client && _sys.protos.client[route])
+			{
+				byte = Protobuf.encode(_sys.protos.client[route], msg);
+			}
+			else
+			{
+				byte = Protocol.strencode(JSON.stringify(msg));
+			}
 			
 			byte = Message.encode(reqId, type, _sys.dict ? _sys.dict[route] : route, byte);
 			byte = Package.encode(Package.TYPE_DATA, byte);

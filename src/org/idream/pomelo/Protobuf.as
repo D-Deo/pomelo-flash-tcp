@@ -5,9 +5,44 @@ package org.idream.pomelo
 
 	public class Protobuf
 	{
-		public static function encode():void
+		private static const TYPES:Object = {
+			uInt32 : 0,
+			sInt32 : 0,
+			int32 : 0,
+			double : 1,
+			string : 2,
+			message : 2,
+			float : 5
+		};
+		
+		public static function encode(protos:Object, msg:Object):ByteArray
 		{
+			var buffer:ByteArray = new ByteArray();
 			
+			for (var name:* in msg)
+			{
+				if (protos[name])
+				{
+					var proto:Object = protos[name];
+					
+					switch (proto.option)
+					{
+						case "optional":
+						case "required":
+							buffer.writeBytes(encodeTag(proto.type, proto.tag));
+							encodeProp(msg[name], proto.type, protos, buffer);
+							break;
+						case "repeated":
+							if (!!msg[name] && msg[name].length > 0)
+							{
+								encodeArray(msg[name], proto, protos, buffer);
+							}
+							break;
+					}
+				}
+			}
+			
+			return buffer;
 		}
 		
 		public static function decode(protos:Object, buffer:ByteArray):Object
@@ -38,11 +73,56 @@ package org.idream.pomelo
 			return msg;
 		}
 		
+		public static function encodeTag(type:int, tag:int):ByteArray
+		{
+			var value:int = TYPES[type] != undefined ? TYPES[type] : 2;
+			
+			return encodeUInt32((tag << 3) | value);
+		}
+		
 		public static function getHead(buffer:ByteArray):Object
 		{
 			var tag:int = decodeUInt32(buffer);
 			
 			return { type: tag & 0x7, tag: tag >> 3 };
+		}
+		
+		public static function encodeProp(value:*, type:String, protos:Object, buffer:ByteArray):void
+		{
+			switch(type)
+			{
+				case 'uInt32':
+					buffer.writeBytes(encodeUInt32(value));
+					break;
+				case 'int32':
+				case 'sInt32':
+					buffer.writeBytes(encodeSInt32(value));
+					break;
+				case 'float':
+					var floats:ByteArray = new ByteArray();
+					floats.endian = Endian.LITTLE_ENDIAN;
+					floats.writeFloat(value);
+					buffer.writeBytes(floats);
+					break;
+				case 'double':
+					var doubles:ByteArray = new ByteArray();
+					doubles.endian = Endian.LITTLE_ENDIAN;
+					doubles.writeDouble(value);
+					buffer.writeBytes(doubles);
+					break;
+				case 'string':
+					buffer.writeBytes(encodeUInt32(value.length));
+					buffer.writeUTFBytes(value);
+					break;
+				default:
+					if (!!protos.__messages[type])
+					{
+						var buf:ByteArray = encode(protos.__messages[type], value);
+						buffer.writeBytes(encodeUInt32(buf.length));
+						buffer.writeBytes(buf);
+					}
+					break;
+			}
 		}
 		
 		public static function decodeProp(type:String, protos:Object, buffer:ByteArray):*
@@ -80,6 +160,40 @@ package org.idream.pomelo
 			}
 		}
 		
+		public static function encodeArray(array:Array, proto:Object, protos:Object, buffer:ByteArray):void
+		{
+			if(isSimpleType(proto.type))
+			{
+				buffer.writeBytes(encodeTag(proto.type, proto.tag));
+				buffer.writeBytes(encodeUInt32(array.length));
+				for (var i:int = 0; i < array.length; i++) 
+				{
+					encodeProp(array[i], proto.type, protos, buffer);
+				}
+			}
+			else
+			{
+				for (var j:int = 0; j < array.length; j++) 
+				{
+					buffer.writeBytes(encodeTag(proto.type, proto.tag));
+					encodeProp(array[i], proto.type, protos, buffer);
+				}
+			}
+			
+			function isSimpleType(type:String):Boolean
+			{
+				return ( 
+					type === 'uInt32' ||
+					type === 'sInt32' ||
+					type === 'int32'  ||
+					type === 'uInt64' ||
+					type === 'sInt64' ||
+					type === 'float'  ||
+					type === 'double'
+				);
+			};
+		}
+		
 		public static function decodeArray(array:Array, type:String, protos:Object, buffer:ByteArray):void 
 		{
 			if(isSimpleType(type))
@@ -109,6 +223,27 @@ package org.idream.pomelo
 			};
 		}
 		
+		public static function encodeUInt32(n:int):ByteArray
+		{
+			var result:ByteArray = new ByteArray();
+			
+			do
+			{
+				var tmp:int = n % 128;
+				var next:int = Math.floor(n / 128);
+				
+				if(next !== 0){
+					tmp = tmp + 128;
+				}
+				
+				result.writeByte(tmp);
+				n = next;
+			}
+			while(n !== 0);
+			
+			return result;
+		}
+		
 		public static function decodeUInt32(buffer:ByteArray):int
 		{
 			var n:int = 0;
@@ -127,6 +262,13 @@ package org.idream.pomelo
 			}
 //			trace("n: " + n);
 			return n;
+		}
+		
+		public static function encodeSInt32(n:int):ByteArray
+		{
+			n = n < 0 ? (Math.abs(n) * 2 - 1) : n * 2;
+			
+			return encodeUInt32(n);
 		}
 		
 		public static function decodeSInt32(buffer:ByteArray):int
