@@ -3,13 +3,11 @@ Pomelo-Flash-TCP
 
 it`s a simple component for supporting pomelo-hybridconnector(tcp)
 
-version: 0.0.3a
+version: 0.0.4a
 
 features:
 
-1. support routeDict
-
-2. support server port of protobuf (server to client)
+1. support client port of protobuf (client encode and server decode)
 
 
 ================
@@ -17,7 +15,7 @@ features:
 
 这是一个为了可以用 flash 的 as3 来和服务端的 pomelo 通讯的 tcp 组件，在自己的项目中已经可以和后台进行调试。
 
-@目前 v0.0.3a 已支持 pomelo 的 routeDict 和 服务端的 protobuf（即客户端可以解析服务端，但服务端暂时不能解析客户端）
+@目前 v0.0.4a 已全面支持 pomelo 的 routeDict 和 服务端的 protobuf
 
 相关的服务器可设置如下参数：
 ```javascript
@@ -40,7 +38,7 @@ pomelo.init("127.0.0.1", 3014);
 pomelo.addEventListener("handshake", onSuccess);
 ```
 
-PS: v0.0.2a 版本可以在 init 方法中直接传递一个 callback，无需监听 handshake 事件，不过此事件仍保留
+@v0.0.2a 版本及以后，可以在 init 方法中直接传递一个 callback，无需监听 handshake 事件，不过此事件仍保留
 ```actionscript
 pomelo.init("127.0.0.1", 3014, null, function(response:Object):void {
     if (response.code == 200) trace(response.user.msg);
