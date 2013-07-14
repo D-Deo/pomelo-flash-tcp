@@ -2,6 +2,7 @@
 <flexLibProperties includeAllClasses="true" useMultiPlatformConfig="false" version="3">
   <includeClasses>
     <classEntry path="org.idream.pomelo.Protobuf"/>
+    <classEntry path="org.idream.pomelo.interfaces.IMessage"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>
