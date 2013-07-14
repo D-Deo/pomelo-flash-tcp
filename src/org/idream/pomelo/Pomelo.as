@@ -12,11 +12,12 @@ package org.idream.pomelo
 	import org.idream.pomelo.Message;
 	import org.idream.pomelo.Package;
 	import org.idream.pomelo.Protocol;
+	import org.idream.pomelo.interfaces.IMessage;
 
 	/**
 	 * Pomelo
 	 * @author Deo
-	 * @version v0.0.4a
+	 * @version v0.0.5a
 	 */
 	public class Pomelo extends EventDispatcher
 	{
@@ -30,9 +31,11 @@ package org.idream.pomelo
 		private var _requestDict:Dictionary;
 		private var _routeDict:Dictionary;
 		
+		public var message:IMessage;
+		
 		public function Pomelo()
 		{
-			_info = { sys: { version:"0.0.4a", type:"pomelo-flash-tcp" } };
+			_info = { sys: { version:"0.0.5a", type:"pomelo-flash-tcp", pomelo_version:"0.4.x" } };
 			_requestDict = new Dictionary(true);
 			_routeDict = new Dictionary(true);
 		}
@@ -141,19 +144,28 @@ package org.idream.pomelo
 		
 		private function send(reqId:int, route:String, msg:Object):void
 		{
-			var type:int = reqId ? Message.TYPE_REQUEST : Message.TYPE_NOTIFY;
-			
 			var byte:ByteArray;
-			if (_sys.protos && _sys.protos.client && _sys.protos.client[route])
+			
+			if (this.message)
 			{
-				byte = Protobuf.encode(_sys.protos.client[route], msg);
+				byte = this.message.encode(reqId, route, msg);
 			}
 			else
 			{
-				byte = Protocol.strencode(JSON.stringify(msg));
+				var type:int = reqId ? Message.TYPE_REQUEST : Message.TYPE_NOTIFY;
+				
+				if (_sys.protos && _sys.protos.client && _sys.protos.client[route])
+				{
+					byte = Protobuf.encode(_sys.protos.client[route], msg);
+				}
+				else
+				{
+					byte = Protocol.strencode(JSON.stringify(msg));
+				}
+				
+				byte = Message.encode(reqId, type, _sys.dict ? _sys.dict[route] : route, byte);
 			}
 			
-			byte = Message.encode(reqId, type, _sys.dict ? _sys.dict[route] : route, byte);
 			byte = Package.encode(Package.TYPE_DATA, byte);
 			
 			_socket.writeBytes(byte, 0, byte.length);
@@ -204,24 +216,33 @@ package org.idream.pomelo
 					break;
 				
 				case 4:
-					var msg:Object = Message.decode(pkg.body);
+					var msg:Object;
 					
-					if (!msg.id && !(msg.route is String)) 
+					if (this.message)
 					{
-						msg.route = _routeDict[msg.route];
-					}
-					else if (msg.id && !msg.route) 
-					{
-						msg.route = _requestDict[msg.id].route;
-					}
-					
-					if (_sys.protos && _sys.protos.server && _sys.protos.server[msg.route])
-					{
-						msg.body = Protobuf.decode(_sys.protos.server[msg.route], msg.body);
+						msg = this.message.decode(pkg.body);
 					}
 					else
 					{
-						msg.body = JSON.parse(Protocol.strdecode(msg.body));
+						msg = Message.decode(pkg.body);
+						
+						if (!msg.id && !(msg.route is String)) 
+						{
+							msg.route = _routeDict[msg.route];
+						}
+						else if (msg.id && !msg.route) 
+						{
+							msg.route = _requestDict[msg.id].route;
+						}
+						
+						if (_sys.protos && _sys.protos.server && _sys.protos.server[msg.route])
+						{
+							msg.body = Protobuf.decode(_sys.protos.server[msg.route], msg.body);
+						}
+						else
+						{
+							msg.body = JSON.parse(Protocol.strdecode(msg.body));
+						}
 					}
 					
 					if (!msg.id)

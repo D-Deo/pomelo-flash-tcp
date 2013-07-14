@@ -1,6 +1,14 @@
 Pomelo-Flash-TCP
 ================
 
+version: 0.0.5a
+
+features:
+
+1. support pomelo new protocol model (v0.4.x)
+
+================
+
 version: 0.0.4a
 
 features:
