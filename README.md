@@ -28,8 +28,10 @@ app.set('connectorConfig', {
   
 @目前 v0.0.5a 也已支持 Pomelo v0.4.x 中的新特性：自定义 Message 的编解码
 
-客户端使用方法：
-1. 创建一个实现了 IMessage 接口的类，并实现其接口方法：encode 和 decode
+客户端使用方法:
+
+1. 创建一个实现了 IMessage 接口的类 (MyMessage)，并实现其接口方法：encode 和 decode，更多编解码内容可参考 Pomelo wiki
+
 2. 在创建 Pomelo 的实例之后，可将自定义的 Message 实例赋值给 Pomelo 的 message 属性
 
 相关客户端代码可参考如下形势：
