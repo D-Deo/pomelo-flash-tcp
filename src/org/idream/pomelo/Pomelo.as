@@ -9,35 +9,40 @@ package org.idream.pomelo
 	import flash.utils.ByteArray;
 	import flash.utils.Dictionary;
 	
-	import org.idream.pomelo.Message;
-	import org.idream.pomelo.Package;
-	import org.idream.pomelo.Protocol;
 	import org.idream.pomelo.interfaces.IMessage;
+	import org.idream.pomelo.interfaces.IPackage;
 
 	/**
-	 * Pomelo
+	 * Pomelo - Flash - TCP
 	 * @author Deo
-	 * @version v0.0.5a
+	 * @version 0.1.0 beta
 	 */
 	public class Pomelo extends EventDispatcher
 	{
-		private var _sys:Object = {};
-		private var _info:Object;
-		private var _handshakeCallback:Function;
+		public static const requests:Dictionary = new Dictionary(true);
+		public static const info:Object = { sys: { version:"0.1.0b", type:"pomelo-flash-tcp", pomelo_version:"0.5.x" } };
 		
+		private var _handshake:Function;
 		private var _socket:Socket;
 		
-		private var _reqId:int;
-		private var _requestDict:Dictionary;
-		private var _routeDict:Dictionary;
+		private var _package:IPackage;
+		private var _message:IMessage;
 		
-		public var message:IMessage;
+		private var _pkg:Object;
+		
+		private static var _pomelo:Pomelo;
+		
+		public static function getIns():Pomelo
+		{
+			return _pomelo ||= new Pomelo();
+		}
 		
 		public function Pomelo()
 		{
-			_info = { sys: { version:"0.0.5a", type:"pomelo-flash-tcp", pomelo_version:"0.4.x" } };
-			_requestDict = new Dictionary(true);
-			_routeDict = new Dictionary(true);
+			_package = new Package();
+			_message = new Message();
+			
+			trace("[Pomelo] start:", JSON.stringify(info));
 		}
 		
 		/**
@@ -45,12 +50,13 @@ package org.idream.pomelo
 		 * @param host
 		 * @param port
 		 * @param user 客户端与服务器之间的自定义数据
-		 * @param handshakeCallback 当连接成功会调用此方法
+		 * @param callback 当连接成功会调用此方法
 		 */
-		public function init(host:String, port:int, user:Object = null, handshakeCallback:Function = null):void
+		public function init(host:String, port:int, user:Object = null, callback:Function = null):void
 		{
-			_info.user = user;
-			_handshakeCallback = handshakeCallback;
+			info.user = user;
+			
+			_handshake = callback;
 			
 			_socket = new Socket();
 			_socket.addEventListener(Event.CONNECT, onConnect, false, 0, true);
@@ -59,56 +65,43 @@ package org.idream.pomelo
 			_socket.addEventListener(IOErrorEvent.IO_ERROR, onIOError, false, 0, true);
 			_socket.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onSecurityError, false, 0, true);
 			
-			//this.addEventListener(Event.ENTER_FRAME, onDecode);
-			
 			_socket.connect(host, port);
 			
 			function onConnect(e:Event):void
 			{
-				trace("connect success ...");
-				
-				var bytes:ByteArray = Package.encode(Package.TYPE_HANDSHAKE, Protocol.strencode(JSON.stringify(_info)));
-				_socket.writeBytes(bytes, 0, bytes.length);
+				trace("[Pomelo] connect success ...");
+				_socket.writeBytes(_package.encode(Package.TYPE_HANDSHAKE, Protocol.strencode(JSON.stringify(info))));
 				_socket.flush();
 			}
 			
 			function onClose(e:Event):void
 			{
-				trace("connect close ...");
-				
-				_socket.removeEventListener(Event.CONNECT, onConnect);
-				_socket.removeEventListener(Event.CLOSE, onClose);
-				_socket.removeEventListener(ProgressEvent.SOCKET_DATA, onData);
-				_socket.removeEventListener(IOErrorEvent.IO_ERROR, onIOError);
-				_socket.removeEventListener(SecurityErrorEvent.SECURITY_ERROR, onSecurityError);
+				trace("[Pomelo] connect close ...");
 				_socket = null;
-				
 				dispatchEvent(e);
 			}
 			
 			function onIOError(e:IOErrorEvent):void
 			{
-				trace(e);
+				trace("[Pomelo] ", e);
+				_socket = null;
 				dispatchEvent(e);
 			}
 			
 			function onSecurityError(e:SecurityErrorEvent):void
 			{
-				trace(e);
+				trace("[Pomelo] ", e);
+				_socket = null;
 				dispatchEvent(e);
 			}
 		}
-		
-//		private function onDecode(e:Event):void
-//		{
-//			
-//		}
 		
 		/**
 		 * 与服务器主动断开连接
 		 */
 		public function disconnect():void
 		{
+			trace("[Pomelo] client close ...");
 			_socket.close();
 			_socket = null;
 		}
@@ -119,16 +112,20 @@ package org.idream.pomelo
 		 * @param msg
 		 * @param callback 服务器返回数据时会回调
 		 */
-		public function request(route:String, msg:Object, callback:Function):void
+		public function request(route:String, msg:Object, callback:Function = null):void
 		{
 			if (!route || !route.length) return;
 			
-			msg = msg || {};
+			if (callback == null) 
+			{
+				this.notify(route, msg);
+				return;
+			}
 			
-			_reqId++;
-			send(_reqId, route, msg);
+			var req:Request = new Request(route, callback);
+			requests[req.id] = req;
 			
-			_requestDict[_reqId] = {'route': route, 'callback': callback};
+			send(req.id, req.route, msg || {});
 		}
 		
 		/**
@@ -138,129 +135,125 @@ package org.idream.pomelo
 		 */
 		public function notify(route:String, msg:Object):void
 		{
-			msg = msg || {};
-			send(0, route, msg);
+			send(0, route, msg || {});
+		}
+		
+		/**
+		 * 响应服务器的推送事件
+		 * @param route 推送事件的名称
+		 * @param callback 当服务器发生推送时会调用此函数
+		 */
+		public function on(route:String, callback:Function):void
+		{
+			this.addEventListener(route, callback);
 		}
 		
 		private function send(reqId:int, route:String, msg:Object):void
 		{
 			var byte:ByteArray;
 			
-			if (this.message)
-			{
-				byte = this.message.encode(reqId, route, msg);
-			}
-			else
-			{
-				var type:int = reqId ? Message.TYPE_REQUEST : Message.TYPE_NOTIFY;
-				
-				if (_sys.protos && _sys.protos.client && _sys.protos.client[route])
-				{
-					byte = Protobuf.encode(_sys.protos.client[route], msg);
-				}
-				else
-				{
-					byte = Protocol.strencode(JSON.stringify(msg));
-				}
-				
-				byte = Message.encode(reqId, type, _sys.dict ? _sys.dict[route] : route, byte);
-			}
+			byte = _message.encode(reqId, route, msg);
+			byte = _package.encode(Package.TYPE_DATA, byte);
 			
-			byte = Package.encode(Package.TYPE_DATA, byte);
-			
-			_socket.writeBytes(byte, 0, byte.length);
+			_socket.writeBytes(byte);
 			_socket.flush();
 		}
 		
 		private function onData(e:ProgressEvent):void
 		{
-			trace("data received ...");
-			var byte:ByteArray = new ByteArray();
-			_socket.readBytes(byte, 0, _socket.bytesAvailable);
+			trace("[Pomelo] client received:", _socket.bytesAvailable);
 			
-			var pkg:Object = Package.decode(byte);
-			trace(pkg.type);
-			
-			switch(pkg.type)
+			do
 			{
-				case 1:
-					var message:String = pkg.body.readUTFBytes(pkg.body.length);
-					trace(message);
-					var response:Object = JSON.parse(message);
-					
-					if (response.code == 200)
+				if (_pkg)
+				{
+					if (_socket.bytesAvailable >= _pkg.length)
 					{
-						if (response.sys) 
-						{
-							_sys = response.sys;
-							for (var key:String in _sys.dict)
+						_pkg.body = new ByteArray();
+						_socket.readBytes(_pkg.body, 0, _pkg.length);
+					}
+				}
+				else
+				{
+					_pkg = _package.decode(_socket);
+				}
+				
+				trace("[Package] type:", _pkg.type);
+				
+				if (_pkg.body)
+				{
+					switch(_pkg.type)
+					{
+						case Package.TYPE_HANDSHAKE:
+							var message:String = _pkg.body.readUTFBytes(_pkg.body.length);
+							trace("[Handshake] message:", message);
+							
+							var response:Object = JSON.parse(message);
+							
+							if (response.code == 200)
 							{
-								_routeDict[_sys.dict[key]] = key;
+								if (response.sys) 
+								{
+									Routedic.init(response.sys.dict);
+									Protobuf.init(response.sys.protos);
+								}
+								
+								_socket.writeBytes(_package.encode(Package.TYPE_HANDSHAKE_ACK));
+								_socket.flush();
+								
+								this.dispatchEvent(new Event("handshake"));
 							}
-						}
+							
+							if (_handshake != null) _handshake.call(this, response);
+							
+							_pkg = null;
+							break;
 						
-						var ack:ByteArray = Package.encode(Package.TYPE_HANDSHAKE_ACK);
-						_socket.writeBytes(ack, 0, ack.length);
-						_socket.flush();
-					}
-					
-					if (_handshakeCallback != null) _handshakeCallback.call(this, response);
-					else dispatchEvent(new Event("handshake"));
-					break;
-				
-				case 2:
-					break;
-				
-				case 3:
-					//TODO: server heartbeat package
-					break;
-				
-				case 4:
-					var msg:Object;
-					
-					if (this.message)
-					{
-						msg = this.message.decode(pkg.body);
-					}
-					else
-					{
-						msg = Message.decode(pkg.body);
+						case Package.TYPE_HANDSHAKE_ACK:
+							_pkg = null;
+							break;
 						
-						if (!msg.id && !(msg.route is String)) 
-						{
-							msg.route = _routeDict[msg.route];
-						}
-						else if (msg.id && !msg.route) 
-						{
-							msg.route = _requestDict[msg.id].route;
-						}
+						case Package.TYPE_HEARTBEAT:
+							//TODO: server heartbeat package
+							_pkg = null;
+							break;
 						
-						if (_sys.protos && _sys.protos.server && _sys.protos.server[msg.route])
-						{
-							msg.body = Protobuf.decode(_sys.protos.server[msg.route], msg.body);
-						}
-						else
-						{
-							msg.body = JSON.parse(Protocol.strdecode(msg.body));
-						}
+						case Package.TYPE_DATA:
+							var msg:Object = _message.decode(_pkg.body);
+							
+							trace("[Message] body:", JSON.stringify(msg.body));
+							
+							if (!msg.id)
+							{
+								this.dispatchEvent(new PomeloEvent(msg.route, msg.body));
+							}
+							else
+							{
+								requests[msg.id].callback.call(this, msg.body);
+								requests[msg.id] = null;
+							}
+							
+							_pkg = null;
+							break;
+						
+						case Package.TYPE_KICK:
+							//TODO: server close client
+							_pkg = null;
+							break;
 					}
-					
-					if (!msg.id)
-					{
-						dispatchEvent(new PomeloEvent(msg.route, msg.body));
-					}
-					else
-					{
-						_requestDict[msg.id].callback.call(this, msg.body);
-						_requestDict[msg.id] = null;
-						delete _requestDict[msg.id];
-					}
-					break;
-				
-				case 5:
-					//TODO: server close client
-					break;
+				}
 			}
+			while (!_pkg && _socket.bytesAvailable > 4);
+		}
+
+		public function get message():IMessage
+		{
+			return _message;
+		}
+
+		public function set message(value:IMessage):void
+		{
+			_message = value;
 		}
 	}
 }

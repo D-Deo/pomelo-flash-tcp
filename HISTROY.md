@@ -1,6 +1,18 @@
 Pomelo-Flash-TCP
 ================
 
+version: 0.1.0b
+
+features:
+
+1. refactor project for improving
+
+2. change decoding for fixing a bug which sometimes can`t be read linked package 
+
+3. add a getIns() static function for single model
+
+================
+
 version: 0.0.5a
 
 features:

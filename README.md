@@ -1,19 +1,23 @@
 Pomelo-Flash-TCP
 ================
 
-it`s a simple component for supporting pomelo-hybridconnector(tcp)
+这是一个用来支持 pomelo-hybridconnector(tcp) 的 flash 通讯组件，底层使用的是 flash socket 的二进制协议
 
-version: 0.0.5a
+目前版本：0.1.0b
 
-features:
+主要更新：
 
-1. support pomelo new protocol model (v0.4.x)
+1. 重构了底层代码，以更友好的方式进行访问和扩展
+
+2. 重构了解码部分的代码，以支持网络传输中的连包、断包现象
+
+3. 添加一个单例模式：getIns()
+
+4. 添加一个 on() 方法，等同于 addEventListener 的方式，主要目的在于友好的 api
 
 
 ================
 
-
-这是一个为了可以用 flash 的 as3 来和服务端的 pomelo 通讯的 tcp 组件，在自己的项目中已经可以和后台进行调试。
 
 @已全面支持 pomelo 的 routeDict 和 服务端的 protobuf
 
@@ -22,22 +26,22 @@ features:
 app.set('connectorConfig', {
   connector : pomelo.connectors.hybridconnector,
   useDict : true,
-  useProtobuf : true,
+  useProtobuf : true
 });
 ```
   
-@目前 v0.0.5a 也已支持 Pomelo v0.4.x 中的新特性：自定义 Message 的编解码
+@已支持 Pomelo v0.4.x 中的新特性：自定义 Message 的编解码
 
 客户端使用方法:
 
-1. 创建一个实现了 IMessage 接口的类 (MyMessage)，并实现其接口方法：encode 和 decode，更多编解码内容可参考 Pomelo wiki
+1. 创建一个实现了 IMessage 接口的类 (MyMessage)，并实现其接口方法：encode 和 decode，更多编解码内容可参考 Pomelo wiki 上的消息协议
 
 2. 在创建 Pomelo 的实例之后，可将自定义的 Message 实例赋值给 Pomelo 的 message 属性
 
 相关客户端代码可参考如下形势：
 ```actionscript
 var myMessage:IMessage = new MyMessage();
-var pomelo:Pomelo = new Pomelo();
+var pomelo:Pomelo = Pomelo.getIns();
 pomelo.message = myMessage;
 ```
 
@@ -53,48 +57,114 @@ var decode = function(msg) {
   // do some customized decode with msg
   return result;	// return decode result
 };
+
+app.set('connectorConfig', {
+  connector : pomelo.connectors.hybridconnector,
+  encode: encode,
+  decode: decode
+});
 ```
 
 
+How To Use
 ================
 
+##1. 初始化并连接服务器
 
-#1. 连接服务器
-需要监听 pomelo 的 handshake 事件，连接成功后会触发此事件
+###新版本推荐使用单例模式来初始化 pomelo 对象，连接成功会返回一个 handshake 事件
 ```actionscript
-var pomelo:Pomelo = new Pomelo()
-pomelo.init("127.0.0.1", 3014);
-pomelo.addEventListener("handshake", onSuccess);
+/**
+ * 初始化客户端，并尝试连接服务器
+ * @param host
+ * @param port
+ * @param user 客户端与服务器之间的自定义数据
+ * @param callback 当连接成功会调用此方法
+ */
+public function init(host:String, port:int, user:Object = null, callback:Function = null):void {}
 ```
 
-@v0.0.2a 版本及以后，可以在 init 方法中直接传递一个 callback，无需监听 handshake 事件，不过此事件仍保留
+###for example:
+```actionscript
+var pomelo:Pomelo = Pomelo.getIns();
+pomelo.init("127.0.0.1", 3014);
+pomelo.addEventListener("handshake", function(event:PomeloEvent):void {
+    trace("connect success ...");
+});
+```
+
+###也可以在 init 方法中直接传递一个 callback, 以便于处理一些连接异常
 ```actionscript
 pomelo.init("127.0.0.1", 3014, null, function(response:Object):void {
-    if (response.code == 200) trace(response.user.msg);
+    if (response.code == 200) trace("connect success ...");
+    else trace("connect failed:", response.code);
 });
 ```
 
 
-#2. request && response
-返回的response是一个object的对象，它解析自服务器的JSON对象
+##2. 请求服务器数据
+
+###response 是一个 object 的对象，它解析自服务器的返回的数据
 ```actionscript
-pomelo.request("connecter.LoginHandler.login", {}, function(response:Object):void {
-    trace("response object : ", response);
+/**
+ * 向服务器请求数据
+ * @param route
+ * @param msg
+ * @param callback 服务器返回数据时会回调
+ */
+public function request(route:String, msg:Object, callback:Function = null):void {}
+```
+
+###for example:
+```actionscript
+pomelo.request("gate.gateHandler.entry", {}, function(response:Object):void {
+    trace("response host:", response.host, " port:", response.port);
 });
 ```
 
 
-#3. notify
-notify是不需要服务器返回response的，所以没有callback
+##3. 向服务器发送数据，无返回
+
+###notify 是不需要服务器返回 response 的，所以没有callback，或者 request 方法里不携带 callback 参数亦可
 ```actionscript
-pomelo.notify("connector.roomHandler.enter", {});
+/**
+ * 向服务器发送数据
+ * @param route
+ * @param msg
+ */
+public function notify(route:String, msg:Object):void {}
+```
+
+###for example:
+```actionscript
+pomelo.notify("connector.connectHandler.leave", {});
 ```
 
 
-#4. 服务器推送
-利用 as3 的事件机制便可以完成接受服务器的推送内容，PomeloEvent有一个message的object参数，解析自服务器推送的JSON
+##4. 服务器推送
+
+###利用 as3 的事件机制或 on 方法监听服务器的推送，PomeloEvent 的 message 解析自服务器推送的数据
 ```actionscript
-pomelo.addEventListener("onStart", function(e:PomeloEvent):void {
+/**
+ * 响应服务器的推送事件
+ * @param route 推送事件的名称
+ * @param callback 当服务器发生推送时会调用此函数
+ */
+public function on(route:String, callback:Function):void {}
+```
+
+###for example:
+```actionscript
+pomelo.on("onServerPush", function(e:PomeloEvent):void {
   trace(e.message);
 });
+```
+
+##5. 断开服务器
+
+###客户端可主动与服务器断开连接，断开后，需重新调用 init 方法才可重连
+```actionscript
+/**
+ * 与服务器主动断开连接
+ */
+public function disconnect():void {}
 ```

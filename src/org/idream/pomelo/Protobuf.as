@@ -5,7 +5,8 @@ package org.idream.pomelo
 
 	public class Protobuf
 	{
-		private static const TYPES:Object = {
+		private static const TYPES:Object = 
+		{
 			uInt32 : 0,
 			sInt32 : 0,
 			int32 : 0,
@@ -15,7 +16,34 @@ package org.idream.pomelo
 			float : 5
 		};
 		
-		public static function encode(protos:Object, msg:Object):ByteArray
+		private static var _clients:Object = {};
+		private static var _servers:Object = {};
+		
+		public static function init(protos:Object):void
+		{
+			_clients = protos && protos.client || {};
+			_servers = protos && protos.server || {};
+		}
+		
+		public static function encode(route:String, msg:Object):ByteArray
+		{
+			var protos:Object = _clients[route];
+			
+			if (!protos) return null;
+			
+			return encodeProtos(protos, msg);
+		}
+		
+		public static function decode(route:String, buffer:ByteArray):Object
+		{
+			var protos:Object = _servers[route];
+			
+			if (!protos) return null;
+			
+			return decodeProtos(protos, buffer);
+		}
+		
+		private static function encodeProtos(protos:Object, msg:Object):ByteArray
 		{
 			var buffer:ByteArray = new ByteArray();
 			
@@ -45,7 +73,7 @@ package org.idream.pomelo
 			return buffer;
 		}
 		
-		public static function decode(protos:Object, buffer:ByteArray):Object
+		private static function decodeProtos(protos:Object, buffer:ByteArray):Object
 		{
 			var msg:Object = {};
 			
@@ -73,21 +101,21 @@ package org.idream.pomelo
 			return msg;
 		}
 		
-		public static function encodeTag(type:int, tag:int):ByteArray
+		private static function encodeTag(type:int, tag:int):ByteArray
 		{
 			var value:int = TYPES[type] != undefined ? TYPES[type] : 2;
 			
 			return encodeUInt32((tag << 3) | value);
 		}
 		
-		public static function getHead(buffer:ByteArray):Object
+		private static function getHead(buffer:ByteArray):Object
 		{
 			var tag:int = decodeUInt32(buffer);
 			
 			return { type: tag & 0x7, tag: tag >> 3 };
 		}
 		
-		public static function encodeProp(value:*, type:String, protos:Object, buffer:ByteArray):void
+		private static function encodeProp(value:*, type:String, protos:Object, buffer:ByteArray):void
 		{
 			switch(type)
 			{
@@ -117,7 +145,7 @@ package org.idream.pomelo
 				default:
 					if (!!protos.__messages[type])
 					{
-						var buf:ByteArray = encode(protos.__messages[type], value);
+						var buf:ByteArray = encodeProtos(protos.__messages[type], value);
 						buffer.writeBytes(encodeUInt32(buf.length));
 						buffer.writeBytes(buf);
 					}
@@ -125,7 +153,7 @@ package org.idream.pomelo
 			}
 		}
 		
-		public static function decodeProp(type:String, protos:Object, buffer:ByteArray):*
+		private static function decodeProp(type:String, protos:Object, buffer:ByteArray):*
 		{
 			switch(type)
 			{
@@ -154,13 +182,13 @@ package org.idream.pomelo
 						var len:int = decodeUInt32(buffer);
 						var buf:ByteArray = new ByteArray();
 						buffer.readBytes(buf, 0, len);
-						return decode(protos.__messages[type], buf);
+						return decodeProtos(protos.__messages[type], buf);
 					}
 					break;
 			}
 		}
 		
-		public static function encodeArray(array:Array, proto:Object, protos:Object, buffer:ByteArray):void
+		private static function encodeArray(array:Array, proto:Object, protos:Object, buffer:ByteArray):void
 		{
 			if(isSimpleType(proto.type))
 			{
@@ -194,7 +222,7 @@ package org.idream.pomelo
 			};
 		}
 		
-		public static function decodeArray(array:Array, type:String, protos:Object, buffer:ByteArray):void 
+		private static function decodeArray(array:Array, type:String, protos:Object, buffer:ByteArray):void 
 		{
 			if(isSimpleType(type))
 			{
@@ -223,7 +251,7 @@ package org.idream.pomelo
 			};
 		}
 		
-		public static function encodeUInt32(n:int):ByteArray
+		private static function encodeUInt32(n:int):ByteArray
 		{
 			var result:ByteArray = new ByteArray();
 			
@@ -244,34 +272,30 @@ package org.idream.pomelo
 			return result;
 		}
 		
-		public static function decodeUInt32(buffer:ByteArray):int
+		private static function decodeUInt32(buffer:ByteArray):int
 		{
 			var n:int = 0;
 			
 			for (var i:int = 0; i < buffer.length; i++)
 			{
-//				trace("i: ", i);
 				var m:int = buffer.readUnsignedByte();
-//				trace("m: " + m);
 				n = n + ((m & 0x7f) * Math.pow(2,(7*i)));
 				if (m < 128)
 				{
-//					trace("n: " + n);
 					return n;
 				}
 			}
-//			trace("n: " + n);
 			return n;
 		}
 		
-		public static function encodeSInt32(n:int):ByteArray
+		private static function encodeSInt32(n:int):ByteArray
 		{
 			n = n < 0 ? (Math.abs(n) * 2 - 1) : n * 2;
 			
 			return encodeUInt32(n);
 		}
 		
-		public static function decodeSInt32(buffer:ByteArray):int
+		private static function decodeSInt32(buffer:ByteArray):int
 		{
 			var n:int = decodeUInt32(buffer);
 			
@@ -279,7 +303,6 @@ package org.idream.pomelo
 			
 			n = ((n % 2 + n) / 2) * flag;
 			
-//			trace("n: " + n);
 			return n;
 		}
 	}

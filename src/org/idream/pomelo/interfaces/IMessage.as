@@ -6,12 +6,12 @@ package org.idream.pomelo.interfaces
 	{
 		/**
 		 * encode
-		 * @param reqId
+		 * @param id
 		 * @param route
 		 * @param msg
 		 * @return ByteArray
 		 */
-		function encode(reqId:uint, route:String, msg:Object):ByteArray;
+		function encode(id:uint, route:String, msg:Object):ByteArray;
 		
 		/**
 		 * decode

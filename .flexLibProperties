@@ -3,6 +3,9 @@
   <includeClasses>
     <classEntry path="org.idream.pomelo.Protobuf"/>
     <classEntry path="org.idream.pomelo.interfaces.IMessage"/>
+    <classEntry path="org.idream.pomelo.Request"/>
+    <classEntry path="org.idream.pomelo.interfaces.IPackage"/>
+    <classEntry path="org.idream.pomelo.Routedic"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>
