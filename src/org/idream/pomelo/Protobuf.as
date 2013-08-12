@@ -143,9 +143,10 @@ package org.idream.pomelo
 					buffer.writeUTFBytes(value);
 					break;
 				default:
-					if (!!protos.__messages[type])
+					var proto:Object = protos.__messages[type] || _clients["message " + type];
+					if (!!proto)
 					{
-						var buf:ByteArray = encodeProtos(protos.__messages[type], value);
+						var buf:ByteArray = encodeProtos(proto, value);
 						buffer.writeBytes(encodeUInt32(buf.length));
 						buffer.writeBytes(buf);
 					}
@@ -177,12 +178,18 @@ package org.idream.pomelo
 					var length:int = decodeUInt32(buffer);
 					return buffer.readUTFBytes(length);
 				default:
-					if(!!protos && !!protos.__messages[type])
+					var proto:Object = protos && (protos.__messages[type] || _servers["message " + type]);
+					if(proto)
 					{
 						var len:int = decodeUInt32(buffer);
-						var buf:ByteArray = new ByteArray();
-						buffer.readBytes(buf, 0, len);
-						return decodeProtos(protos.__messages[type], buf);
+						
+						if (len) 
+						{
+							var buf:ByteArray = new ByteArray();
+							buffer.readBytes(buf, 0, len);
+						}
+						
+						return len ? decodeProtos(proto, buf) : false;
 					}
 					break;
 			}
