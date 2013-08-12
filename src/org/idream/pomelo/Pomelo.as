@@ -6,6 +6,7 @@ package org.idream.pomelo
 	import flash.events.ProgressEvent;
 	import flash.events.SecurityErrorEvent;
 	import flash.net.Socket;
+	import flash.system.Security;
 	import flash.utils.ByteArray;
 	import flash.utils.Dictionary;
 	
@@ -15,12 +16,12 @@ package org.idream.pomelo
 	/**
 	 * Pomelo - Flash - TCP
 	 * @author Deo
-	 * @version 0.1.0 beta
+	 * @version 0.1.1 beta
 	 */
 	public class Pomelo extends EventDispatcher
 	{
 		public static const requests:Dictionary = new Dictionary(true);
-		public static const info:Object = { sys: { version:"0.1.0b", type:"pomelo-flash-tcp", pomelo_version:"0.5.x" } };
+		public static const info:Object = { sys: { version:"0.1.1b", type:"pomelo-flash-tcp", pomelo_version:"0.5.x" } };
 		
 		private var _handshake:Function;
 		private var _socket:Socket;
@@ -57,6 +58,8 @@ package org.idream.pomelo
 			info.user = user;
 			
 			_handshake = callback;
+			
+			Security.loadPolicyFile("xmlsocket://" + host + ":3843");
 			
 			_socket = new Socket();
 			_socket.addEventListener(Event.CONNECT, onConnect, false, 0, true);
@@ -145,7 +148,7 @@ package org.idream.pomelo
 		 */
 		public function on(route:String, callback:Function):void
 		{
-			this.addEventListener(route, callback);
+			this.addEventListener(route, callback, false, 0, true);
 		}
 		
 		private function send(reqId:int, route:String, msg:Object):void
@@ -178,7 +181,7 @@ package org.idream.pomelo
 					_pkg = _package.decode(_socket);
 				}
 				
-				trace("[Package] type:", _pkg.type);
+				trace("[Package] type:", _pkg.type, "length:", _pkg.length);
 				
 				if (_pkg.body)
 				{
