@@ -3,17 +3,13 @@ Pomelo-Flash-TCP
 
 这是一个用来支持 pomelo-hybridconnector(tcp) 的 flash 通讯组件，底层使用的是 flash socket 的二进制协议
 
-目前版本：0.1.0b
+目前版本：0.1.1b
 
 主要更新：
 
-1. 重构了底层代码，以更友好的方式进行访问和扩展
+1. 添加安全策略文件的检查获取，端口为3843，如果默认的843找不到会找当前连接服务器的3843端口
 
-2. 重构了解码部分的代码，以支持网络传输中的连包、断包现象
-
-3. 添加一个单例模式：getIns()
-
-4. 添加一个 on() 方法，等同于 addEventListener 的方式，主要目的在于友好的 api
+2. 支持 protobuf 的 root message 功能，若要要使用 root message，请使用最新的 pomelo-protobuf
 
 
 ================

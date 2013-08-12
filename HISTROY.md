@@ -1,6 +1,16 @@
 Pomelo-Flash-TCP
 ================
 
+version: 0.1.1b
+
+features:
+
+1. add Security to check 3843 of port
+
+2. add support for root message of protobuf
+
+================
+
 version: 0.1.0b
 
 features:
