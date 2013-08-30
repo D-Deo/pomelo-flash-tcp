@@ -83,12 +83,12 @@ public function init(host:String, port:int, user:Object = null, callback:Functio
 ```actionscript
 var pomelo:Pomelo = Pomelo.getIns();
 pomelo.init("127.0.0.1", 3014);
-pomelo.addEventListener("handshake", function(event:PomeloEvent):void {
+pomelo.addEventListener("handshake", function(event:Event):void {
     trace("connect success ...");
 });
 ```
 
-###也可以在 init 方法中直接传递一个 callback, 以便于处理一些连接异常
+###也可以在 init 方法中直接传递一个 callback, 以便于处理一些连接异常，目前推荐用此方式
 ```actionscript
 pomelo.init("127.0.0.1", 3014, null, function(response:Object):void {
     if (response.code == 200) trace("connect success ...");
