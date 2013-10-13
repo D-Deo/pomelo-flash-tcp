@@ -1,6 +1,22 @@
 Pomelo-Flash-TCP
 ================
 
+version: 0.1.2b
+
+features:
+
+1. implement heartbeat from server, now client will echo server
+
+2. add timeout checking as connecting
+
+bugs:
+
+1. fix decoding when length of pkg is 0, the body just create a empty ByteArray
+
+2. fix and improve instance of socket by using
+
+================
+
 version: 0.1.1b
 
 features:
