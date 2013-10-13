@@ -3,24 +3,26 @@ Pomelo-Flash-TCP
 
 这是一个用来支持 pomelo-hybridconnector(tcp) 的 flash 通讯组件，底层使用的是 flash socket 的二进制协议
 
-目前版本：0.1.1b
+案例参考：https://github.com/mani95lisa/PomeloFlashDemo
+
+目前版本：0.1.2b
 
 主要更新：
 
-1. 添加安全策略文件的检查获取，端口为3843，如果默认的843找不到会找当前连接服务器的3843端口
+1. 添加超时判断，现在客户端可以在 init 方法中传入 timeout 参数，连接服务器时会做判断
 
-2. 支持 protobuf 的 root message 功能，若要要使用 root message，请使用最新的 pomelo-protobuf
-
+2. 添加支持 pomelo server 的 心跳（heartbeat）的判断，客户端会作出回应
 
 ================
 
-
-@已全面支持 pomelo 的 routeDict 和 服务端的 protobuf
+@已全面支持 pomelo 的 routeDict， 服务端的 protobuf， 以及心跳判断 heartbeat
 
 相关的服务器可设置如下参数：
 ```javascript
 app.set('connectorConfig', {
   connector : pomelo.connectors.hybridconnector,
+  heartbeat : 30,
+  disconnectOnTimeout : true    //现在你可以设置这个参数了
   useDict : true,
   useProtobuf : true
 });
