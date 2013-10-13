@@ -33,14 +33,16 @@ package org.idream.pomelo
 			var type:int = buffer.readUnsignedByte();
 			var len:int = (buffer.readUnsignedByte() << 16 | buffer.readUnsignedByte() << 8 | buffer.readUnsignedByte()) >>> 0;
 			
+			var body:ByteArray;
+			
 			if (buffer.bytesAvailable >= len)
 			{
-				var body:ByteArray = new ByteArray();
-				buffer.readBytes(body, 0, len);
+				body = new ByteArray();
+				if (len) buffer.readBytes(body, 0, len); 
 			}
 			else
 			{
-				trace("[Package] buffer length error:", type);
+				trace("[Package] no enough length for current type:", type);
 			}
 			
 			return {type:type, body:body, length:len};
