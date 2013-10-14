@@ -10,7 +10,9 @@ package org.idream.pomelo
 		
 		public function Request(route:String, callback:Function = null)
 		{
-			reqId++;
+			if(reqId<127)
+				reqId++;
+			else reqId=1;
 			
 			this.id = reqId;
 			this.route = route;
