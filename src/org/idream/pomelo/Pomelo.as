@@ -19,12 +19,12 @@ package org.idream.pomelo
 	/**
 	 * Pomelo - Flash - TCP
 	 * @author Deo
-	 * @version 0.1.2 beta
+	 * @version 0.1.3 beta
 	 */
 	public class Pomelo extends EventDispatcher
 	{
 		public static const requests:Dictionary = new Dictionary(true);
-		public static const info:Object = { sys: { version:"0.1.2b", type:"pomelo-flash-tcp", pomelo_version:"0.5.x" } };
+		public static const info:Object = { sys: { version:"0.1.3b", type:"pomelo-flash-tcp", pomelo_version:"0.5.x" } };
 		
 		private var _handshake:Function;
 		private var _socket:Socket;
@@ -136,6 +136,21 @@ package org.idream.pomelo
 			this.addEventListener(route, callback, false, 0, true);
 		}
 		
+		/**
+		 * 向服务器发送一次心跳事件
+		 */
+		public function beat():void
+		{
+			clearTimeout(_hb);
+			_hb = 0;
+			
+			if (_socket && _socket.connected)
+			{
+				_socket.writeBytes(_package.encode(Package.TYPE_HEARTBEAT));
+				_socket.flush();
+			}
+		}
+		
 		private function send(reqId:int, route:String, msg:Object):void
 		{
 			var byte:ByteArray;
@@ -241,16 +256,7 @@ package org.idream.pomelo
 							
 							if (this.heartbeat)
 							{
-								_hb = setTimeout(function():void {
-									clearTimeout(_hb);
-									_hb = 0;
-									
-									if (_socket && _socket.connected)
-									{
-										_socket.writeBytes(_package.encode(Package.TYPE_HEARTBEAT));
-										_socket.flush();
-									}
-								}, this.heartbeat * 1000);
+								_hb = setTimeout(beat, this.heartbeat * 1000);
 							}
 							break;
 						
