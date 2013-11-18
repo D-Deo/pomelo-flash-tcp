@@ -1,6 +1,14 @@
 Pomelo-Flash-TCP
 ================
 
+version: 0.1.3b
+
+features:
+
+1. add beat function, now if call this, client will send heartbeat to server
+
+================
+
 version: 0.1.2b
 
 features:

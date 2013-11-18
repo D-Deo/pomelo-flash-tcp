@@ -5,13 +5,11 @@ Pomelo-Flash-TCP
 
 案例参考：https://github.com/mani95lisa/PomeloFlashDemo
 
-目前版本：0.1.2b
+目前版本：0.1.3b
 
 主要更新：
 
-1. 添加超时判断，现在客户端可以在 init 方法中传入 timeout 参数，连接服务器时会做判断
-
-2. 添加支持 pomelo server 的 心跳（heartbeat）的判断，客户端会作出回应
+1. 添加心跳方法（beat），支持客户端可以通过调用该方法直接向服务器推送心跳回应
 
 ================
 
