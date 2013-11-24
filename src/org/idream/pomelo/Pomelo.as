@@ -72,12 +72,12 @@ package org.idream.pomelo
 			{
 				_socket = new Socket();
 				_socket.timeout = timeout;
-				_socket.addEventListener(Event.CONNECT, onConnect, false, 0, true);
-				_socket.addEventListener(Event.CLOSE, onClose, false, 0, true);
-				_socket.addEventListener(OutputProgressEvent.OUTPUT_PROGRESS, onOutputProgress, false, 0, true);
-				_socket.addEventListener(ProgressEvent.SOCKET_DATA, onData, false, 0, true);
-				_socket.addEventListener(IOErrorEvent.IO_ERROR, onIOError, false, 0, true);
-				_socket.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onSecurityError, false, 0, true);
+				_socket.addEventListener(Event.CONNECT, onConnect);
+				_socket.addEventListener(Event.CLOSE, onClose);
+				_socket.addEventListener(OutputProgressEvent.OUTPUT_PROGRESS, onOutputProgress);
+				_socket.addEventListener(ProgressEvent.SOCKET_DATA, onData);
+				_socket.addEventListener(IOErrorEvent.IO_ERROR, onIOError);
+				_socket.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onSecurityError);
 			}
 			
 			trace("[Pomelo] start to connect server ...");
