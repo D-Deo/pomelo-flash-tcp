@@ -133,7 +133,7 @@ package org.idream.pomelo
 		 */
 		public function on(route:String, callback:Function):void
 		{
-			this.addEventListener(route, callback, false, 0, true);
+			this.addEventListener(route, callback);
 		}
 		
 		private function send(reqId:int, route:String, msg:Object):void
