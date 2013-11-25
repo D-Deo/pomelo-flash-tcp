@@ -1,6 +1,14 @@
 Pomelo-Flash-TCP
 ================
 
+version: 0.1.4b
+
+features:
+
+1. merge some changes from @iggyZiggy, it`s about developers can use weak or not.
+
+================
+
 version: 0.1.3b
 
 features:

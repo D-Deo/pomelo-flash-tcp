@@ -5,11 +5,11 @@ Pomelo-Flash-TCP
 
 案例参考：https://github.com/mani95lisa/PomeloFlashDemo
 
-目前版本：0.1.3b
+目前版本：0.1.4b
 
 主要更新：
 
-1. 添加心跳方法（beat），支持客户端可以通过调用该方法直接向服务器推送心跳回应
+1. 合并来自 @iggyZiggy 的代码提交，主要更新了关于socket实例的弱引用问题，现在留给开发者选择
 
 ================
 
