@@ -19,12 +19,12 @@ package org.idream.pomelo
 	/**
 	 * Pomelo - Flash - TCP
 	 * @author Deo
-	 * @version 0.1.3 beta
+	 * @version 0.1.4 beta
 	 */
 	public class Pomelo extends EventDispatcher
 	{
 		public static const requests:Dictionary = new Dictionary(true);
-		public static const info:Object = { sys: { version:"0.1.3b", type:"pomelo-flash-tcp", pomelo_version:"0.5.x" } };
+		public static const info:Object = { sys: { version:"0.1.4b", type:"pomelo-flash-tcp", pomelo_version:"0.5.x" } };
 		
 		private var _handshake:Function;
 		private var _socket:Socket;
@@ -304,15 +304,19 @@ package org.idream.pomelo
 		{
 			_message = value;
 		}
+		
 		/**
 		* if you use new Pomelo(false)
 		* (not using weak reference)
 		* don't forget to call destroy()
 		*/
-		public function destroy():void{
-			for(var r:int=_routesAndCallbacks.length-1;r>=0;r--)
+		public function destroy():void
+		{
+			for (var r:int=_routesAndCallbacks.length-1;r>=0;r--)
+			{
 				this.removeEventListener(_routesAndCallbacks[r][0], _routesAndCallbacks[r][1]);
 			}
+			
 			_socket.removeEventListener(Event.CONNECT, onConnect);
 			_socket.removeEventListener(Event.CLOSE, onClose);
 			_socket.removeEventListener(OutputProgressEvent.OUTPUT_PROGRESS, onOutputProgress);
