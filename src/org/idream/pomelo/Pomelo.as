@@ -35,6 +35,9 @@ package org.idream.pomelo
 		
 		private var _pkg:Object;
 		
+		private var _useWeakReference:Boolean;
+		private var _routesAndCallbacks:Array = new Array();
+		
 		private static var _pomelo:Pomelo;
 		
 		public static function getIns():Pomelo
@@ -44,10 +47,11 @@ package org.idream.pomelo
 		
 		public var heartbeat:int;
 		
-		public function Pomelo()
+		public function Pomelo(useWeakReference:Boolean=true)
 		{
 			_package = new Package();
 			_message = new Message();
+			_useWeakReference = useWeakReference;
 			
 			trace("[Pomelo] start:", JSON.stringify(info));
 		}
@@ -72,12 +76,12 @@ package org.idream.pomelo
 			{
 				_socket = new Socket();
 				_socket.timeout = timeout;
-				_socket.addEventListener(Event.CONNECT, onConnect);
-				_socket.addEventListener(Event.CLOSE, onClose);
-				_socket.addEventListener(OutputProgressEvent.OUTPUT_PROGRESS, onOutputProgress);
-				_socket.addEventListener(ProgressEvent.SOCKET_DATA, onData);
-				_socket.addEventListener(IOErrorEvent.IO_ERROR, onIOError);
-				_socket.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onSecurityError);
+				_socket.addEventListener(Event.CONNECT, onConnect, false, 0, _useWeakReference);
+				_socket.addEventListener(Event.CLOSE, onClose, false, 0, _useWeakReference);
+				_socket.addEventListener(OutputProgressEvent.OUTPUT_PROGRESS, onOutputProgress, false, 0, _useWeakReference);
+				_socket.addEventListener(ProgressEvent.SOCKET_DATA, onData, false, 0, _useWeakReference);
+				_socket.addEventListener(IOErrorEvent.IO_ERROR, onIOError, false, 0, _useWeakReference);
+				_socket.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onSecurityError, false, 0, _useWeakReference);
 			}
 			
 			trace("[Pomelo] start to connect server ...");
@@ -133,7 +137,8 @@ package org.idream.pomelo
 		 */
 		public function on(route:String, callback:Function):void
 		{
-			this.addEventListener(route, callback);
+			this.addEventListener(route, callback, false, 0, _useWeakReference);
+			_routesAndCallbacks.push([route, callback]);
 		}
 		
 		private function send(reqId:int, route:String, msg:Object):void
@@ -292,6 +297,22 @@ package org.idream.pomelo
 		public function set message(value:IMessage):void
 		{
 			_message = value;
+		}
+		/**
+		* if you use new Pomelo(false)
+		* (not using weak reference)
+		* don't forget to call destroy()
+		*/
+		public function destroy():void{
+			for(var r:int=_routesAndCallbacks.length-1;r>=0;r--)
+				this.removeEventListener(_routesAndCallbacks[r][0], _routesAndCallbacks[r][1]);
+			}
+			_socket.removeEventListener(Event.CONNECT, onConnect);
+			_socket.removeEventListener(Event.CLOSE, onClose);
+			_socket.removeEventListener(OutputProgressEvent.OUTPUT_PROGRESS, onOutputProgress);
+			_socket.removeEventListener(ProgressEvent.SOCKET_DATA, onData);
+			_socket.removeEventListener(IOErrorEvent.IO_ERROR, onIOError);
+			_socket.removeEventListener(SecurityErrorEvent.SECURITY_ERROR, onSecurityError);
 		}
 	}
 }
