@@ -15,16 +15,22 @@ package org.idream.pomelo
 	
 	import org.idream.pomelo.interfaces.IMessage;
 	import org.idream.pomelo.interfaces.IPackage;
-
+	
+	[Event(name="handshake", type="org.idream.pomelo.PomeloEvent")]
+	[Event(name="kicked", type = "org.idream.pomelo.PomeloEvent")]
+	[Event(name="close", type = "flash.events.Event")]
+	[Event(name="ioError", type="flash.events.IOErrorEvent")]
+	[Event(name="securityError", type="flash.events.SecurityErrorEvent")]
+	
 	/**
 	 * Pomelo - Flash - TCP
 	 * @author Deo
-	 * @version 0.1.4 beta
+	 * @version 0.1.5 beta
 	 */
 	public class Pomelo extends EventDispatcher
 	{
 		public static const requests:Dictionary = new Dictionary(true);
-		public static const info:Object = { sys: { version:"0.1.4b", type:"pomelo-flash-tcp", pomelo_version:"0.5.x" } };
+		public static const info:Object = { sys: { version:"0.1.5b", type:"pomelo-flash-tcp", pomelo_version:"0.5.x" } };
 		
 		private var _handshake:Function;
 		private var _socket:Socket;
@@ -244,7 +250,7 @@ package org.idream.pomelo
 								_socket.writeBytes(_package.encode(Package.TYPE_HANDSHAKE_ACK));
 								_socket.flush();
 								
-								this.dispatchEvent(new Event("handshake"));
+								this.dispatchEvent(new PomeloEvent(PomeloEvent.HANDSHAKE));
 							}
 							
 							if (_handshake != null) _handshake.call(this, response);
@@ -284,7 +290,7 @@ package org.idream.pomelo
 							break;
 						
 						case Package.TYPE_KICK:
-							//TODO: server close client
+							this.dispatchEvent(new PomeloEvent(PomeloEvent.KICKED));
 							_pkg = null;
 							break;
 					}
