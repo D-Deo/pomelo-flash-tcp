@@ -1,6 +1,16 @@
 Pomelo-Flash-TCP
 ================
 
+version: 0.1.5b
+
+features:
+
+1. add [Event] metadata for how to know events
+
+2. add kicked event when server disconnect client
+
+================
+
 version: 0.1.4b
 
 features:
