@@ -25,12 +25,12 @@ package org.idream.pomelo
 	/**
 	 * Pomelo - Flash - TCP
 	 * @author Deo
-	 * @version 0.1.5 beta
+	 * @version 0.1.6 beta
 	 */
 	public class Pomelo extends EventDispatcher
 	{
 		public static const requests:Dictionary = new Dictionary(true);
-		public static const info:Object = { sys: { version:"0.1.5b", type:"pomelo-flash-tcp", pomelo_version:"0.5.x" } };
+		public static const info:Object = { sys: { version:"0.1.6b", type:"pomelo-flash-tcp", pomelo_version:"0.7.x" } };
 		
 		private var _handshake:Function;
 		private var _socket:Socket;
@@ -48,12 +48,12 @@ package org.idream.pomelo
 		
 		public static function getIns():Pomelo
 		{
-			return _pomelo ||= new Pomelo();
+			return _pomelo ||= new Pomelo(false);
 		}
 		
 		public var heartbeat:int;
 		
-		public function Pomelo(useWeakReference:Boolean=true)
+		public function Pomelo(useWeakReference:Boolean = true)
 		{
 			_package = new Package();
 			_message = new Message();
@@ -68,15 +68,17 @@ package org.idream.pomelo
 		 * @param port
 		 * @param user 客户端与服务器之间的自定义数据
 		 * @param callback 当连接成功会调用此方法
+		 * @param timeout 连接超时
+		 * @param cross 安全策略文件的自定义端口
 		 */
-		public function init(host:String, port:int, user:Object = null, callback:Function = null, timeout:int = 8000):void
+		public function init(host:String, port:int, user:Object = null, callback:Function = null, encrypt:Boolean = false, timeout:int = 8000, cross:int = 3843):void
 		{
 			info.user = user;
 			
 			_handshake = callback;
 			
 //			trace("[Pomelo] load policy file:", "xmlsocket://" + host + ":3843");
-			Security.loadPolicyFile("xmlsocket://" + host + ":3843");
+			Security.loadPolicyFile("xmlsocket://" + host + ":" + cross);
 			
 			if (!_socket)
 			{
@@ -164,6 +166,8 @@ package org.idream.pomelo
 		
 		private function send(reqId:int, route:String, msg:Object):void
 		{
+			trace("[Pomelo] send msg: ", JSON.stringify(msg));
+			
 			var byte:ByteArray;
 			
 			byte = _message.encode(reqId, route, msg);
