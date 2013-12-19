@@ -71,7 +71,7 @@ package org.idream.pomelo
 		 * @param timeout 连接超时
 		 * @param cross 安全策略文件的自定义端口
 		 */
-		public function init(host:String, port:int, user:Object = null, callback:Function = null, encrypt:Boolean = false, timeout:int = 8000, cross:int = 3843):void
+		public function init(host:String, port:int, user:Object = null, callback:Function = null, timeout:int = 8000, cross:int = 3843):void
 		{
 			info.user = user;
 			
