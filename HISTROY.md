@@ -1,6 +1,16 @@
 Pomelo-Flash-TCP
 ================
 
+version: 0.1.6b
+
+features:
+
+1. add crossdomain port param on init function.  (Default is 3843)
+
+2. fix message id on decode and encode from pomelo 7.x
+
+================
+
 version: 0.1.5b
 
 features:

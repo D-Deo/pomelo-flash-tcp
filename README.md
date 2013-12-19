@@ -5,13 +5,18 @@ Pomelo-Flash-TCP
 
 案例参考：https://github.com/mani95lisa/PomeloFlashDemo
 
-目前版本：0.1.5b
+目前版本：0.1.6b
 
 主要更新：
 
-1. 添加一些事件的元标签，方便开发者可以知道 pomelo 能监听哪些事件
+1. 开放自定义安全策略文件的端口，init方法可以设置，默认3843
 
-2. 增加服务器断开客户端时的事件通知，EventType：ticked
+2. 修改 message 部分的 id encode/decode 方法
+
+
+补充说明：
+
+v0.1.6 beta 现已正式支持 pomelo 7.x， 估计是 0.2.0 正式版更新前的最后一个 beta 了，但是目前不支持 pomelo 6.x 的 RSA 加解密，因为 as3 目前的 RSA 加解密组件和官方的暂时不兼容，此问题日后有机会再解决，如果有其他高人可以帮忙解决，再次先感谢一下了
 
 ================
 
