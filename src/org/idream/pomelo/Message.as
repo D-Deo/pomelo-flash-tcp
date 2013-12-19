@@ -44,19 +44,36 @@ package org.idream.pomelo
 			
 			if (id)
 			{
-				var len:Array = [];
-				len.push(id & 0x7f);
-				id >>= 7;
-				while(id > 0)
+				// 7.x
+				do
 				{
-					len.push(id & 0x7f | 0x80);
-					id >>= 7;
-				}
+					var tmp:int = id % 128;
+					var next:Number = Math.floor(id / 128);
+					
+					if (next != 0)
+					{
+						tmp = tmp + 128;
+					}
+					
+					buffer.writeByte(tmp);
+					
+					id = next;
+				} while (id != 0);
 				
-				for (var i:int = len.length - 1; i >= 0; i--) 
-				{
-					buffer.writeByte(len[i]);
-				}
+				// 5.x
+//				var len:Array = [];
+//				len.push(id & 0x7f);
+//				id >>= 7;
+//				while(id > 0)
+//				{
+//					len.push(id & 0x7f | 0x80);
+//					id >>= 7;
+//				}
+//				
+//				for (var i:int = len.length - 1; i >= 0; i--) 
+//				{
+//					buffer.writeByte(len[i]);
+//				}
 			}
 			
 			if (rot)
@@ -92,14 +109,24 @@ package org.idream.pomelo
 			var id:int = 0;
 			if (type === Message.TYPE_REQUEST || type === Message.TYPE_RESPONSE) 
 			{
-				var byte:int = buffer.readUnsignedByte();
-				id = byte & 0x7f;
-				while(byte & 0x80)
+				// 7.x
+				var i:int = 0;
+				do
 				{
-					id <<= 7;
-					byte = buffer.readUnsignedByte();
-					id |= byte & 0x7f;
-				}
+					var m:int = buffer.readUnsignedByte();
+					id = id + ((m & 0x7f) * Math.pow(2, (7 * i)));
+					i++;
+				} while(m >= 128);
+				
+				// 5.x
+//				var byte:int = buffer.readUnsignedByte();
+//				id = byte & 0x7f;
+//				while(byte & 0x80)
+//				{
+//					id <<= 7;
+//					byte = buffer.readUnsignedByte();
+//					id |= byte & 0x7f;
+//				}
 			}
 			
 			// parse route
