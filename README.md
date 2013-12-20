@@ -1,7 +1,7 @@
-Pomelo-Flash-TCP-Mirage
+Pomelo-Flash-TCP
 ================
 
-这是一个用来支持 pomelo-hybridconnector(tcp) 的 flash 通讯组件，运行于 Mirage 平台的 ActionScript 3 环境中，底层使用的是 flash socket 的二进制协议
+这是一个用来支持 pomelo-hybridconnector(tcp) 的 flash 通讯组件，底层使用的是 flash socket 的二进制协议
 
 案例参考：https://github.com/mani95lisa/PomeloFlashDemo
 
