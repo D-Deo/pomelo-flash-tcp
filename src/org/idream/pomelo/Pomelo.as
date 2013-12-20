@@ -237,6 +237,12 @@ package org.idream.pomelo
 					{
 						case Package.TYPE_HANDSHAKE:
 							var message:String = _pkg.body.readUTFBytes(_pkg.body.length);
+
+							_pkg.body.clear();
+							delete _pkg.body;
+							delete _pkg.type;
+							_pkg = null;
+
 							trace("[Handshake] message:", message);
 							
 							var response:Object = JSON.parse(message);
@@ -259,14 +265,22 @@ package org.idream.pomelo
 							
 							if (_handshake != null) _handshake.call(this, response);
 							
-							_pkg = null;
 							break;
 						
 						case Package.TYPE_HANDSHAKE_ACK:
+							
+							_pkg.body.clear();
+							delete _pkg.body;
+							delete _pkg.type;
 							_pkg = null;
+
 							break;
 						
 						case Package.TYPE_HEARTBEAT:
+							
+							_pkg.body.clear();
+							delete _pkg.body;
+							delete _pkg.type;
 							_pkg = null;
 							
 							if (this.heartbeat)
@@ -277,6 +291,11 @@ package org.idream.pomelo
 						
 						case Package.TYPE_DATA:
 							var msg:Object = _message.decode(_pkg.body);
+
+							_pkg.body.clear();
+							delete _pkg.body;
+							delete _pkg.type;
+							_pkg = null;
 							
 							trace("[Message] route:", msg.route, "body:", JSON.stringify(msg.body));
 							
@@ -290,12 +309,17 @@ package org.idream.pomelo
 								requests[msg.id] = null;
 							}
 							
-							_pkg = null;
 							break;
 						
 						case Package.TYPE_KICK:
-							this.dispatchEvent(new PomeloEvent(PomeloEvent.KICKED));
+
+							_pkg.body.clear();
+							delete _pkg.body;
+							delete _pkg.type;
 							_pkg = null;
+
+							this.dispatchEvent(new PomeloEvent(PomeloEvent.KICKED));
+							
 							break;
 					}
 				}
