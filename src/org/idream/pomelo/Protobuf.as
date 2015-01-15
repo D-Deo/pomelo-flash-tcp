@@ -211,7 +211,7 @@ package org.idream.pomelo
 				for (var j:int = 0; j < array.length; j++) 
 				{
 					buffer.writeBytes(encodeTag(proto.type, proto.tag));
-					encodeProp(array[i], proto.type, protos, buffer);
+					encodeProp(array[j], proto.type, protos, buffer);
 				}
 			}
 			
