@@ -300,9 +300,10 @@ package org.idream.pomelo
 					}
 				}
 				
-				trace("[Pomelo] client next:", _socket.bytesAvailable);
+				if (_socket)
+				    trace("[Pomelo] client next:", _socket.bytesAvailable);
 			}
-			while (!_pkg && _socket.bytesAvailable > 4);
+			while (!_pkg && _socket && _socket.bytesAvailable > 4);
 		}
 
 		public function get message():IMessage
